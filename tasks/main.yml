@@ -10,26 +10,46 @@
       paths:
         - '{{ role_path }}/vars'
 
+- name: instal kernel-devel
+  package:
+    name: kernel-devel kernel kernel-headers
+    state: latest
+  register: kernel_pkgs
+  until: kernel_pkgs is success
+  retries: 10
+  delay: 2
+
 - name: install dep pkgs
-  become: yes
+  become: true
   become_user: root
   with_items: '{{ virtualbox_dep_pkgs }}'
   package:
     name: '{{ item }}'
     state: present
+  register: virtualbox_dep_pkgs_install
+  until: virtualbox_dep_pkgs_install is success
+  retries: 10
+  delay: 2
 
 - name: add pkg mgr config
   include_tasks: '{{ virtualbox_pkg_mgr }}.yml'
 
 - name: install virtualbox
-  become: yes
+  become: true
   become_user: root
   package:
     name: '{{ virtualbox_pkg_name }}'
     state: present
+  register: virtualbox_install
+  until: virtualbox_install is success
+  retries: 10
+  delay: 2
 
 - name: install vbox drivers...
-  become: yes
+  become: true
   become_user: root
   with_items: '{{ virtualbox_postinstall_cfg }}'
   command: '{{ item }}'
+  register: driver_install
+  changed_when: driver_install.rc == 0
+  failed_when: driver_install.rc != 0

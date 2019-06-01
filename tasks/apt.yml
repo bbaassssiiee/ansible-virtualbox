@@ -1,16 +1,20 @@
 ---
-- name : add virtualbox apt key
-  become: yes
+- name: add virtualbox apt key
+  become: true
   become_user: root
   with_items: '{{ virtualbox_keys }}'
   apt_key:
     url: '{{ virtualbox_key_mirror }}/{{ item.name }}'
     id: '{{ item.id }}'
+  register: virtualbox_key
+  until: virtualbox_key is success
+  retries: 10
+  delay: 2
 
 - name: add virtualbox apt repository
-  become: yes
+  become: true
   become_user: root
   apt_repository:
-    update_cache: yes
+    update_cache: true
+    # yamllint disable-line rule:line-length
     repo: 'deb http://download.virtualbox.org/virtualbox/debian {{ ansible_distribution_release }} contrib'
-
